@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>📝 Log repas</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #1a1a1a; color: #e5e5e5;
+            min-height: 100vh; padding: 20px 16px 40px;
+            max-width: 480px; margin: 0 auto;
+        }
+        h1 { font-size: 22px; font-weight: 600; margin-bottom: 28px; color: #fff; }
+        .field { margin-bottom: 22px; }
+        label.field-label {
+            display: block; font-size: 12px; font-weight: 600;
+            color: #666; text-transform: uppercase;
+            letter-spacing: 0.6px; margin-bottom: 10px;
+        }
+        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn-opt {
+            padding: 10px 14px; background: #252525;
+            border: 1.5px solid #333; border-radius: 10px;
+            color: #bbb; font-size: 15px; cursor: pointer;
+            transition: all 0.15s; user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            font-family: inherit;
+        }
+        .btn-opt.selected { background: #1d4ed8; border-color: #1d4ed8; color: #fff; }
+        .btn-opt:active { transform: scale(0.95); }
+        input[type="text"], textarea {
+            width: 100%; padding: 13px 14px;
+            background: #252525; border: 1.5px solid #333;
+            border-radius: 10px; color: #e5e5e5; font-size: 16px;
+            outline: none; font-family: inherit;
+            transition: border-color 0.15s;
+        }
+        input[type="text"]:focus, textarea:focus { border-color: #1d4ed8; }
+        textarea { resize: none; height: 80px; }
+        .toggle-row { display: flex; align-items: center; gap: 14px; }
+        .toggle { position: relative; width: 50px; height: 28px; flex-shrink: 0; }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .toggle-track {
+            position: absolute; inset: 0;
+            background: #333; border-radius: 28px; cursor: pointer;
+            transition: background 0.2s;
+        }
+        .toggle-track:before {
+            content: ''; position: absolute;
+            width: 22px; height: 22px; left: 3px; top: 3px;
+            background: #fff; border-radius: 50%;
+            transition: transform 0.2s;
+        }
+        .toggle input:checked + .toggle-track { background: #16a34a; }
+        .toggle input:checked + .toggle-track:before { transform: translateX(22px); }
+        .toggle-label { font-size: 15px; color: #888; transition: color 0.2s; }
+        .toggle-label.on { color: #86efac; }
+        .btn-submit {
+            width: 100%; padding: 16px; background: #1d4ed8;
+            border: none; border-radius: 12px; color: white;
+            font-size: 17px; font-weight: 600; cursor: pointer;
+            margin-top: 6px; font-family: inherit;
+            transition: opacity 0.15s, transform 0.1s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn-submit:active { transform: scale(0.98); opacity: 0.9; }
+        .btn-submit:disabled { opacity: 0.45; cursor: not-allowed; }
+        .status {
+            margin-top: 16px; padding: 13px 14px;
+            border-radius: 10px; font-size: 15px; display: none;
+        }
+        .status.success { background: #14532d; color: #86efac; display: block; }
+        .status.error   { background: #450a0a; color: #fca5a5; display: block; }
+        .required { color: #ef4444; margin-left: 2px; }
+    </style>
+</head>
+<body>
+    <h1>📝 Log repas</h1>
+
+    <div class="field">
+        <label class="field-label">Type de repas <span class="required">*</span></label>
+        <div class="btn-group" id="g-type">
+            <button class="btn-opt" data-v="🌅 Petit-déj">🌅 Petit-déj</button>
+            <button class="btn-opt" data-v="☀️ Midi">☀️ Midi</button>
+            <button class="btn-opt" data-v="🌙 Soir">🌙 Soir</button>
+            <button class="btn-opt" data-v="🍎 Goûter">🍎 Goûter</button>
+            <button class="btn-opt" data-v="🍬 Grignotage">🍬 Grignotage</button>
+        </div>
+    </div>
+
+    <div class="field">
+        <label class="field-label">Quantité <span class="required">*</span></label>
+        <div class="btn-group" id="g-quant">
+            <button class="btn-opt" data-v="🔽 Peu">🔽 Peu</button>
+            <button class="btn-opt" data-v="✅ Normal">✅ Normal</button>
+            <button class="btn-opt" data-v="🔼 Beaucoup">🔼 Beaucoup</button>
+        </div>
+    </div>
+
+    <div class="field">
+        <label class="field-label">Quoi ? <span class="required">*</span></label>
+        <input type="text" id="quoi" placeholder="N°7 · poulet riz brocoli · sandwich…" autocomplete="off" autocorrect="off">
+    </div>
+
+    <div class="field">
+        <label class="field-label">Légumes</label>
+        <div class="toggle-row">
+            <label class="toggle">
+                <input type="checkbox" id="legumes">
+                <span class="toggle-track"></span>
+            </label>
+            <span class="toggle-label" id="leg-label">Non</span>
+        </div>
+    </div>
+
+    <div class="field">
+        <label class="field-label">Notes <span style="color:#555;font-weight:400;text-transform:none;letter-spacing:0">(optionnel)</span></label>
+        <textarea id="notes" placeholder="Contexte, ressenti, faim anormale…"></textarea>
+    </div>
+
+    <button class="btn-submit" id="btn" onclick="submitForm()">Enregistrer le repas</button>
+    <div class="status" id="status"></div>
+
+    <script>
+        const KEY = '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';
+        const DB  = 'bd2c4ab26abc44f1ad6fcd96ac51c5a1';
+        let type = '', quant = '';
+
+        function bindGroup(id, setter) {
+            document.querySelectorAll(`#${id} .btn-opt`).forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll(`#${id} .btn-opt`).forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    setter(btn.dataset.v);
+                });
+            });
+        }
+        bindGroup('g-type',  v => type  = v);
+        bindGroup('g-quant', v => quant = v);
+
+        document.getElementById('legumes').addEventListener('change', function() {
+            const lbl = document.getElementById('leg-label');
+            lbl.textContent = this.checked ? 'Oui' : 'Non';
+            lbl.classList.toggle('on', this.checked);
+        });
+
+        async function submitForm() {
+            const quoi    = document.getElementById('quoi').value.trim();
+            const notes   = document.getElementById('notes').value.trim();
+            const legumes = document.getElementById('legumes').checked;
+            const btn     = document.getElementById('btn');
+
+            if (!type)  return show('error', 'Sélectionne un type de repas.');
+            if (!quant) return show('error', 'Sélectionne une quantité.');
+            if (!quoi)  return show('error', 'Indique ce que tu as mangé.');
+
+            btn.disabled = true;
+            btn.textContent = 'Envoi…';
+            hide();
+
+            const today = new Date().toISOString().split('T')[0];
+            const body = {
+                parent: { database_id: DB },
+                properties: {
+                    Repas:          { title: [{ text: { content: '' } }] },
+                    Date:           { date: { start: today } },
+                    Type:           { select: { name: type } },
+                    'Quantité':     { select: { name: quant } },
+                    Quoi:           { rich_text: [{ text: { content: quoi } }] },
+                    '🥦 Légumes ?': { checkbox: legumes },
+                    Notes:          { rich_text: [{ text: { content: notes } }] }
+                }
+            };
+
+            try {
+                const res  = await fetch('https://api.notion.com/v1/pages', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${KEY}`,
+                        'Notion-Version': '2022-06-28',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    show('success', `✅ Enregistré — ${type} · ${quant}`);
+                    reset();
+                } else {
+                    show('error', `Erreur Notion : ${data.message || res.status}`);
+                }
+            } catch(e) {
+                show('error', e.name === 'TypeError'
+                    ? '⚠️ CORS bloqué — proxy requis. Voir prochaine étape.'
+                    : `Erreur : ${e.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Enregistrer le repas';
+            }
+        }
+
+        function reset() {
+            document.querySelectorAll('.btn-opt').forEach(b => b.classList.remove('selected'));
+            type = ''; quant = '';
+            ['quoi','notes'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('legumes').checked = false;
+            const lbl = document.getElementById('leg-label');
+            lbl.textContent = 'Non'; lbl.classList.remove('on');
+        }
+        function show(cls, msg) {
+            const el = document.getElementById('status');
+            el.className = `status ${cls}`; el.textContent = msg;
+        }
+        function hide() { document.getElementById('status').className = 'status'; }
+    </script>
+</body>
+</html>
