@@ -33,14 +33,17 @@
         }
         .btn-opt.selected { background: #1d4ed8; border-color: #1d4ed8; color: #fff; }
         .btn-opt:active { transform: scale(0.95); }
-        input[type="text"], textarea {
+        input[type="text"], input[type="number"], textarea {
             width: 100%; padding: 13px 14px;
             background: #252525; border: 1.5px solid #333;
             border-radius: 10px; color: #e5e5e5; font-size: 16px;
             outline: none; font-family: inherit;
             transition: border-color 0.15s;
         }
-        input[type="text"]:focus, textarea:focus { border-color: #1d4ed8; }
+        input[type="text"]:focus, input[type="number"]:focus, textarea:focus { border-color: #1d4ed8; }
+        input[type="number"] { -moz-appearance: textfield; }
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         textarea { resize: none; height: 80px; }
         .toggle-row { display: flex; align-items: center; gap: 14px; }
         .toggle { position: relative; width: 50px; height: 28px; flex-shrink: 0; }
@@ -90,6 +93,7 @@
         .status.success { background: #14532d; color: #86efac; display: block; }
         .status.error   { background: #450a0a; color: #fca5a5; display: block; }
         .required { color: #ef4444; margin-left: 2px; }
+        .opt-label { color:#555; font-weight:400; text-transform:none; letter-spacing:0; }
     </style>
 </head>
 <body>
@@ -121,6 +125,11 @@
     </div>
 
     <div class="field">
+        <label class="field-label">Protéines <span class="opt-label">(g, optionnel)</span></label>
+        <input type="number" id="proteines" placeholder="ex: 130" min="0" max="500">
+    </div>
+
+    <div class="field">
         <label class="field-label">Légumes</label>
         <div class="toggle-row">
             <label class="toggle">
@@ -132,12 +141,12 @@
     </div>
 
     <div class="field">
-        <label class="field-label">Notes <span style="color:#555;font-weight:400;text-transform:none;letter-spacing:0">(optionnel)</span></label>
+        <label class="field-label">Notes <span class="opt-label">(optionnel)</span></label>
         <textarea id="notes" placeholder="Contexte, ressenti, faim anormale…"></textarea>
     </div>
 
     <div class="field">
-        <label class="field-label">Photo <span style="color:#555;font-weight:400;text-transform:none;letter-spacing:0">(optionnel)</span></label>
+        <label class="field-label">Photo <span class="opt-label">(optionnel)</span></label>
         <label class="photo-label">
             <input type="file" id="photo" accept="image/*" capture="environment">
             <span id="photo-text">📷 Ajouter une photo</span>
@@ -188,10 +197,11 @@
         });
 
         async function submitForm() {
-            const quoi    = document.getElementById('quoi').value.trim();
-            const notes   = document.getElementById('notes').value.trim();
-            const legumes = document.getElementById('legumes').checked;
-            const btn     = document.getElementById('btn');
+            const quoi      = document.getElementById('quoi').value.trim();
+            const notes     = document.getElementById('notes').value.trim();
+            const legumes   = document.getElementById('legumes').checked;
+            const proteines = document.getElementById('proteines').value.trim();
+            const btn       = document.getElementById('btn');
 
             if (!type)  return show('error', 'Sélectionne un type de repas.');
             if (!quant) return show('error', 'Sélectionne une quantité.');
@@ -214,6 +224,10 @@
                     Notes:          { rich_text: [{ text: { content: notes } }] }
                 }
             };
+
+            if (proteines !== '' && !isNaN(Number(proteines))) {
+                notionBody.properties['Protéines (g)'] = { number: Number(proteines) };
+            }
 
             const payload = { notion_body: notionBody };
             if (photoBase64) {
@@ -245,7 +259,7 @@
         function reset() {
             document.querySelectorAll('.btn-opt').forEach(b => b.classList.remove('selected'));
             type = ''; quant = ''; photoBase64 = null; photoMime = null;
-            ['quoi','notes'].forEach(id => document.getElementById(id).value = '');
+            ['quoi','notes','proteines'].forEach(id => document.getElementById(id).value = '');
             document.getElementById('legumes').checked = false;
             const lbl = document.getElementById('leg-label');
             lbl.textContent = 'Non'; lbl.classList.remove('on');
