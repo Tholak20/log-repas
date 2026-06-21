@@ -57,6 +57,22 @@
         .toggle input:checked + .toggle-track:before { transform: translateX(22px); }
         .toggle-label { font-size: 15px; color: #888; transition: color 0.2s; }
         .toggle-label.on { color: #86efac; }
+
+        /* Photo */
+        .photo-label {
+            display: flex; align-items: center; justify-content: center;
+            width: 100%; padding: 20px; gap: 10px;
+            background: #252525; border: 1.5px dashed #444;
+            border-radius: 10px; cursor: pointer; color: #888;
+            font-size: 15px; transition: border-color 0.15s;
+        }
+        .photo-label:hover, .photo-label:active { border-color: #1d4ed8; color: #aaa; }
+        .photo-label input { display: none; }
+        #photo-preview {
+            width: 100%; max-height: 200px; object-fit: cover;
+            border-radius: 10px; display: none; margin-top: 10px;
+        }
+
         .btn-submit {
             width: 100%; padding: 16px; background: #1d4ed8;
             border: none; border-radius: 12px; color: white;
@@ -120,14 +136,22 @@
         <textarea id="notes" placeholder="Contexte, ressenti, faim anormale…"></textarea>
     </div>
 
+    <div class="field">
+        <label class="field-label">Photo <span style="color:#555;font-weight:400;text-transform:none;letter-spacing:0">(optionnel)</span></label>
+        <label class="photo-label">
+            <input type="file" id="photo" accept="image/*" capture="environment">
+            <span id="photo-text">📷 Ajouter une photo</span>
+        </label>
+        <img id="photo-preview" alt="Aperçu photo">
+    </div>
+
     <button class="btn-submit" id="btn" onclick="submitForm()">Enregistrer le repas</button>
     <div class="status" id="status"></div>
 
     <script>
-        // Proxy Cloudflare Worker — clé Notion stockée côté serveur
         const PROXY = 'https://capture-to-action.tolak20.workers.dev/log-repas';
         const DB    = 'bd2c4ab26abc44f1ad6fcd96ac51c5a1';
-        let type = '', quant = '';
+        let type = '', quant = '', photoBase64 = null, photoMime = null;
 
         function bindGroup(id, setter) {
             document.querySelectorAll(`#${id} .btn-opt`).forEach(btn => {
@@ -147,6 +171,22 @@
             lbl.classList.toggle('on', this.checked);
         });
 
+        document.getElementById('photo').addEventListener('change', function() {
+            const file = this.files[0];
+            if (!file) return;
+            document.getElementById('photo-text').textContent = '✅ ' + file.name;
+            photoMime = file.type;
+            const reader = new FileReader();
+            reader.onload = e => {
+                const result = e.target.result;
+                photoBase64 = result.split(',')[1];
+                const preview = document.getElementById('photo-preview');
+                preview.src = result;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        });
+
         async function submitForm() {
             const quoi    = document.getElementById('quoi').value.trim();
             const notes   = document.getElementById('notes').value.trim();
@@ -158,11 +198,11 @@
             if (!quoi)  return show('error', 'Indique ce que tu as mangé.');
 
             btn.disabled = true;
-            btn.textContent = 'Envoi…';
+            btn.textContent = photoBase64 ? 'Envoi photo…' : 'Envoi…';
             hide();
 
             const today = new Date().toISOString().split('T')[0];
-            const body = {
+            const notionBody = {
                 parent: { database_id: DB },
                 properties: {
                     Repas:          { title: [{ text: { content: '' } }] },
@@ -175,11 +215,17 @@
                 }
             };
 
+            const payload = { notion_body: notionBody };
+            if (photoBase64) {
+                payload.photo_base64 = photoBase64;
+                payload.photo_mime   = photoMime;
+            }
+
             try {
                 const res  = await fetch(PROXY, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
+                    body: JSON.stringify(payload)
                 });
                 const data = await res.json();
                 if (res.ok) {
@@ -198,11 +244,14 @@
 
         function reset() {
             document.querySelectorAll('.btn-opt').forEach(b => b.classList.remove('selected'));
-            type = ''; quant = '';
+            type = ''; quant = ''; photoBase64 = null; photoMime = null;
             ['quoi','notes'].forEach(id => document.getElementById(id).value = '');
             document.getElementById('legumes').checked = false;
             const lbl = document.getElementById('leg-label');
             lbl.textContent = 'Non'; lbl.classList.remove('on');
+            document.getElementById('photo').value = '';
+            document.getElementById('photo-text').textContent = '📷 Ajouter une photo';
+            document.getElementById('photo-preview').style.display = 'none';
         }
         function show(cls, msg) {
             const el = document.getElementById('status');
