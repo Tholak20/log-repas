@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>📝 Log repas</title>
+    <title>Log repas</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%231d4ed8'/><text y='.9em' font-size='62' x='50%' text-anchor='middle' dominant-baseline='top' font-family='system-ui'>🍽️</text></svg>">
+    <meta name="apple-mobile-web-app-title" content="Log repas">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -57,8 +60,6 @@
         .toggle input:checked + .toggle-track:before { transform: translateX(22px); }
         .toggle-label { font-size: 15px; color: #888; transition: color 0.2s; }
         .toggle-label.on { color: #86efac; }
-
-        /* Photo */
         .photo-label {
             display: flex; align-items: center; justify-content: center;
             width: 100%; padding: 20px; gap: 10px;
@@ -72,7 +73,6 @@
             width: 100%; max-height: 200px; object-fit: cover;
             border-radius: 10px; display: none; margin-top: 10px;
         }
-
         .btn-submit {
             width: 100%; padding: 16px; background: #1d4ed8;
             border: none; border-radius: 12px; color: white;
@@ -93,7 +93,7 @@
     </style>
 </head>
 <body>
-    <h1>📝 Log repas</h1>
+    <h1>Log repas</h1>
 
     <div class="field">
         <label class="field-label">Type de repas <span class="required">*</span></label>
